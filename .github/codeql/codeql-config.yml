@@ -1,0 +1,42 @@
+name: "YASH CodeQL Configuration"
+
+# This configuration file specifies the queries to run for CodeQL analysis
+# and configures the build process for C/C++ projects.
+
+# Specify the queries to run
+queries:
+  # Use the default security and quality queries
+  - uses: security-and-quality
+  
+  # Add additional queries for better coverage
+  - name: security-extended
+    uses: security-extended
+  - name: security-and-quality
+    uses: security-and-quality
+
+# Configure the build process
+build-mode: manual
+
+# Specify paths to include/exclude
+paths:
+  - "src/"
+  - "include/"
+  - "tests/test_src/"
+
+paths-ignore:
+  - "docs/"
+  - "build/"
+  - "tests/unity/"
+  - "*.md"
+  - "*.txt"
+  - "*.yml"
+  - "*.yaml"
+  - "*.json"
+  - "*.sh"
+
+# Configure the C/C++ build
+build-command: |
+  make clean
+  make compile_commands.json
+  make all
+  make test
