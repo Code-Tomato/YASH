@@ -24,9 +24,12 @@ docs/doxygen-awesome-css/.git/
 .Trashes
 ehthumbs.db
 Thumbs.db
+.cache/
 
-# Editor files
-.vscode/
+# Editor files (keep VSCode config, ignore user-specific settings)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
 .idea/
 *.sublime-*
 
