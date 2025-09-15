@@ -1,6 +1,34 @@
-bin/
+# Build artifacts
 build/
-*.swp
-.DS_Store
-.vscode/
 obj/
+bin/
+
+# Generated documentation
+docs/html/
+docs/latex/
+
+# Doxygen Awesome theme (keep the source, ignore any local modifications)
+docs/doxygen-awesome-css/.git/
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.sublime-*
+
+# Log files
+*.log

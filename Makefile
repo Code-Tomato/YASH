@@ -8,8 +8,9 @@ LDFLAGS =
 # Directories
 SRCDIR = src
 INCDIR = include
-OBJDIR = obj
-BINDIR = bin
+OBJDIR = build/obj
+BINDIR = build/bin
+DOCDIR = docs
 
 # Target executable name
 TARGET = yash
@@ -40,7 +41,7 @@ $(BINDIR):
 
 # Clean up compiled files
 clean:
-	rm -rf $(OBJDIR) $(BINDIR)
+	rm -rf build
 
 # Clean and rebuild
 rebuild: clean all
@@ -53,15 +54,26 @@ install: $(BINDIR)/$(TARGET)
 uninstall:
 	rm -f /usr/local/bin/$(TARGET)
 
+# Documentation targets
+docs: $(DOCDIR)/html/index.html
+
+$(DOCDIR)/html/index.html: $(wildcard $(INCDIR)/*.h) $(wildcard $(SRCDIR)/*.c) Doxyfile
+	doxygen Doxyfile
+
+docs-clean:
+	rm -rf $(DOCDIR)/html $(DOCDIR)/latex
+
 # Show help
 help:
 	@echo "Available targets:"
-	@echo "  all      - Build the project (default)"
-	@echo "  clean    - Remove all compiled files"
-	@echo "  rebuild  - Clean and build"
-	@echo "  install  - Install to /usr/local/bin"
-	@echo "  uninstall- Remove from /usr/local/bin"
-	@echo "  help     - Show this help message"
+	@echo "  all        - Build the project (default)"
+	@echo "  clean      - Remove all compiled files"
+	@echo "  rebuild    - Clean and build"
+	@echo "  docs       - Generate documentation"
+	@echo "  docs-clean - Remove generated documentation"
+	@echo "  install    - Install to /usr/local/bin"
+	@echo "  uninstall  - Remove from /usr/local/bin"
+	@echo "  help       - Show this help message"
 
 # Declare phony targets (targets that don't create files)
-.PHONY: all clean rebuild install uninstall help
+.PHONY: all clean rebuild docs docs-clean install uninstall help

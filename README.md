@@ -37,6 +37,8 @@ make              # Build the project (default)
 make all          # Same as above
 make clean        # Remove all compiled files
 make rebuild      # Clean and build from scratch
+make docs         # Generate documentation
+make docs-clean   # Remove generated documentation
 make install      # Install to /usr/local/bin
 make uninstall    # Remove from /usr/local/bin
 make help         # Show all available targets
@@ -45,11 +47,18 @@ make help         # Show all available targets
 ### Project Structure
 ```
 YASH/
-├── src/          # Source files (.c)
-├── include/      # Header files (.h)
-├── obj/          # Object files (.o) - created during build
-├── bin/          # Executable - created during build
-└── Makefile      # Build configuration
+├── src/                    # Source files (.c)
+├── include/                # Header files (.h)
+├── build/                  # Build artifacts (created during build)
+│   ├── obj/               # Object files (.o)
+│   └── bin/               # Executable
+├── docs/                   # Documentation
+│   ├── html/              # Generated HTML docs (run `make docs`)
+│   ├── images/            # Documentation images
+│   ├── mainpage.md        # Main documentation page
+│   └── doxygen-awesome-css/ # Doxygen theme
+├── Makefile               # Build configuration
+└── Doxyfile              # Documentation configuration
 ```
 
 ### Dependencies
@@ -62,6 +71,26 @@ brew install readline
 
 # Or build without readline support (basic functionality only)
 ```
+
+### Documentation
+The project includes comprehensive documentation generated with Doxygen and styled with the Doxygen Awesome theme:
+
+**🌐 Live Documentation**: [View on GitHub Pages](https://yourusername.github.io/YASH/)
+
+**Local Development:**
+```bash
+# Generate documentation
+make docs
+
+# View documentation
+open docs/html/index.html
+```
+
+The documentation includes:
+- **API Reference**: Complete function and structure documentation
+- **Architecture Overview**: Module organization and relationships
+- **Usage Examples**: Code examples and usage patterns
+- **Modern Theme**: Clean, responsive design with dark mode support
 
 ---
 
