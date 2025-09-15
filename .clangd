@@ -1,0 +1,14 @@
+CompileFlags:
+  Add:
+    - -I./include
+    - -I./tests/unity/src
+    - -I./tests/unity/extras/fixture/src
+    - -std=c99
+    - -Wall
+    - -Wextra
+  Remove:
+    - -W*
+    - -O*
+    - -g*
+    - -D*
+
