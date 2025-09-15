@@ -3,10 +3,8 @@
  * @brief Core data structures and constants
  * @author Nathan Lemma
  * @date 09-15-2025
- * @details This header file contains the core data structures and constants used throughout
- *          the YASH shell implementation. It defines the Command and Line structures that
- *          represent parsed shell commands and input lines, along with various limits
- *          and configuration constants.
+ * @details This file contains the core data structures and constants used throughout the YASH shell
+ * implementation.
  */
 
 #pragma once

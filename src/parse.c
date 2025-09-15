@@ -1,3 +1,11 @@
+/**
+ * @file parse.c
+ * @brief Parse functions for the YASH shell
+ * @author Nathan Lemma
+ * @date 09-16-2025
+ * @details This file contains the parse functions for the YASH shell.
+ */
+
 // ============================================================================
 // Includes
 // ============================================================================
@@ -79,6 +87,8 @@ static int analyze_structure(char* tokens[], int n, int* pipe_idx, int* has_amp)
  */
 static int fill_command(Command* cmd, char* tokens[], int lo, int hi) {
 
+   int args_closed = 0;
+
    cmd->in_file = NULL;
    cmd->out_file = NULL;
    cmd->err_file = NULL;
@@ -91,20 +101,24 @@ static int fill_command(Command* cmd, char* tokens[], int lo, int hi) {
    for (int i = lo; i < hi; i++) {
       switch (kind_of(tokens[i])) {
       case TK_WORD:
+         if (args_closed == 1) return -1;
          if (k >= MAX_ARGS - 1) return -1;
          cmd->argv[k++] = tokens[i];
          break;
       case TK_REDIR_IN:
+         args_closed = 1;
          if (i + 1 >= hi || cmd->in_file || kind_of(tokens[i + 1]) != TK_WORD) return -1;
          cmd->in_file = tokens[i + 1];
          i++;
          break;
       case TK_REDIR_OUT:
+         args_closed = 1;
          if (i + 1 >= hi || cmd->out_file || kind_of(tokens[i + 1]) != TK_WORD) return -1;
          cmd->out_file = tokens[i + 1];
          i++;
          break;
       case TK_REDIR_ERR:
+         args_closed = 1;
          if (i + 1 >= hi || cmd->err_file || kind_of(tokens[i + 1]) != TK_WORD) return -1;
          cmd->err_file = tokens[i + 1];
          i++;
@@ -124,6 +138,10 @@ static int fill_command(Command* cmd, char* tokens[], int lo, int hi) {
 // ============================================================================
 
 int parse_line(char* line, Line* line_out) {
+   // Check for NULL input
+   if (!line || !line_out) {
+      return -1;
+   }
 
    // Parse the line
    if (strnlen(line, MAX_CMDLINE) == MAX_CMDLINE) {
@@ -147,19 +165,19 @@ int parse_line(char* line, Line* line_out) {
    }
 
    // Match the tokens
-   int pipe_inx = -1;
+   int pipe_idx = -1;
    int has_amp = 0;
-   if (analyze_structure(tokens, num_tokens, &pipe_inx, &has_amp) == -1) return -1;
+   if (analyze_structure(tokens, num_tokens, &pipe_idx, &has_amp) == -1) return -1;
 
-   line_out->is_pipeline = (pipe_inx != -1);
+   line_out->is_pipeline = (pipe_idx != -1);
 
-   if (pipe_inx == -1) {
+   if (pipe_idx == -1) {
       int hi = has_amp ? num_tokens - 1 : num_tokens;
       if (fill_command(&line_out->left, tokens, 0, hi) == -1) return -1;
       line_out->left.background = has_amp ? 1 : 0;
    } else {
-      int left_lo = 0, left_hi = pipe_inx;
-      int right_lo = pipe_inx + 1;
+      int left_lo = 0, left_hi = pipe_idx;
+      int right_lo = pipe_idx + 1;
       int right_hi = num_tokens;
       if (left_hi <= left_lo || right_hi <= right_lo) return -1;
       if (fill_command(&line_out->left, tokens, left_lo, left_hi) == -1) return -1;
@@ -193,7 +211,7 @@ int tokenize_line(char* line, char* tokens[], int* num_tokens) {
       while (*ptr && *ptr != ' ' && *ptr != '\t') {
          ptr++;
          i++;
-         if (i > MAX_TOKEN_LEN) return -1;
+         if (i > MAX_TOKEN_LEN) return -1; // allow length <= MAX_TOKEN_LEN (30), reject 31+
       }
 
       // End of the token
