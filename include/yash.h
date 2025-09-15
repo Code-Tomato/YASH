@@ -12,6 +12,11 @@
 #pragma once
 
 // ============================================================================
+// Includes
+// ============================================================================
+#include <sys/stat.h>
+
+// ============================================================================
 // Configuration Constants
 // ============================================================================
 
@@ -31,7 +36,7 @@
 #define MAX_JOBS 20
 
 /** @brief File creation mode */
-#define FILE_CREATE_MODE S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH
+#define FILE_CREATE_MODE (S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH)
 
 // ============================================================================
 // Enums
@@ -39,13 +44,12 @@
 
 /** @brief Token kinds */
 typedef enum {
-   TK_WORD,      ///< regular text (cmd/arg/filename)
-   TK_REDIR_IN,  ///< "<"
-   TK_REDIR_OUT, ///< ">"
-   TK_REDIR_ERR, ///< "2>"
-   TK_PIPE,      ///< "|"
-   TK_AMP,       ///< "&"
-   TK_EOL        ///< End of line
+   TK_WORD,      ///< Identifies = `Regular text`
+   TK_REDIR_IN,  ///< Identifies = `<`
+   TK_REDIR_OUT, ///< Identifies = `>`
+   TK_REDIR_ERR, ///< Identifies = `2>`
+   TK_PIPE,      ///< Identifies = `|`
+   TK_AMP,       ///< Identifies = `&`
 } TokenKind;
 
 // ============================================================================
@@ -65,11 +69,11 @@ typedef enum {
  *   parsing and execution.
  */
 typedef struct Command {
-   char* argv[MAX_ARGS];
-   char* in_file;
-   char* out_file;
-   char* err_file;
-   int background;
+   char* argv[MAX_ARGS]; ///< Null-terminated array of arguments
+   char* in_file;        ///< Filename for input redirection
+   char* out_file;       ///< Filename for output redirection
+   char* err_file;       ///< Filename for error redirection
+   int background;       ///< Background execution flag
 } Command;
 
 /**
@@ -83,34 +87,8 @@ typedef struct Command {
  *   including & if present.
  */
 typedef struct Line {
-   int is_pipeline;
-   Command left;
-   Command right;
-   char original[MAX_CMDLINE];
+   int is_pipeline;            ///< Flag indicating if the line is a pipeline
+   Command left;               ///< Left command
+   Command right;              ///< Right command
+   char original[MAX_CMDLINE]; ///< Original command line string
 } Line;
-
-/**
- * @brief Represents a single token from the input line.
- *
- * Invariants:
- * - lexeme is always NULL-terminated and points to the start of the token in the input line.
- * - fd is only valid for redirections (TK_REDIR_IN, TK_REDIR_OUT, TK_REDIR_ERR).
- * - fd is -1 for TK_WORD.
- */
-typedef struct Token {
-   const char* lexeme; ///< pointer into your in-place buffer, for TK_WORD
-   TokenKind kind;     ///< kind of token
-   int fd;             ///< for redirs: -1 for all kinds, 0 for "<", 1 for ">", 2 for "2>"
-} Token;
-
-/** @brief Table of tokens */
-static const Token token_table[] = {
-    {"<", TK_REDIR_IN, 0},
-    {">", TK_REDIR_OUT, 1},
-    {"2>", TK_REDIR_ERR, 2},
-    {"|", TK_PIPE, -1},
-    {"&", TK_AMP, -1},
-};
-
-/** @brief Size of the token table */
-static const int token_table_size = sizeof(token_table) / sizeof(token_table[0]);

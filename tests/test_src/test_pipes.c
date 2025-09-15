@@ -38,14 +38,14 @@ void test_parse_simple_pipe(void) {
 }
 
 void test_parse_pipe_with_arguments(void) {
-   char line[] = "cat file.txt | grep -i pattern | wc -l";
+   char line[] = "cat file.txt | grep -i pattern";
    Line parsed_line;
    memset(&parsed_line, 0, sizeof(parsed_line));
 
    int result = parse_line(line, &parsed_line);
 
    TEST_ASSERT_EQUAL(0, result);
-   TEST_ASSERT_EQUAL_STRING("cat file.txt | grep -i pattern | wc -l", parsed_line.original);
+   TEST_ASSERT_EQUAL_STRING("cat file.txt | grep -i pattern", parsed_line.original);
    TEST_ASSERT_EQUAL(1, parsed_line.is_pipeline);
 
    // Left command (cat)
@@ -64,6 +64,16 @@ void test_parse_pipe_with_arguments(void) {
    TEST_ASSERT_NULL(parsed_line.right.out_file);
    TEST_ASSERT_NULL(parsed_line.right.err_file);
    TEST_ASSERT_EQUAL(0, parsed_line.right.background);
+}
+
+void test_parse_multi_pipe_rejected(void) {
+   char line[] = "cat file.txt | grep -i pattern | wc -l";
+   Line parsed_line;
+   memset(&parsed_line, 0, sizeof(parsed_line));
+
+   int result = parse_line(line, &parsed_line);
+
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 void test_parse_pipe_with_redirections(void) {
@@ -235,25 +245,8 @@ void test_parse_pipe_complex_right_command(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   TEST_ASSERT_EQUAL(0, result);
-   TEST_ASSERT_EQUAL_STRING("ls | grep -E '^[a-z]' | sort | uniq", parsed_line.original);
-   TEST_ASSERT_EQUAL(1, parsed_line.is_pipeline);
-
-   // Left command (ls)
-   TEST_ASSERT_EQUAL_STRING("ls", parsed_line.left.argv[0]);
-   TEST_ASSERT_NULL(parsed_line.left.in_file);
-   TEST_ASSERT_NULL(parsed_line.left.out_file);
-   TEST_ASSERT_NULL(parsed_line.left.err_file);
-   TEST_ASSERT_EQUAL(0, parsed_line.left.background);
-
-   // Right command (grep)
-   TEST_ASSERT_EQUAL_STRING("grep", parsed_line.right.argv[0]);
-   TEST_ASSERT_EQUAL_STRING("-E", parsed_line.right.argv[1]);
-   TEST_ASSERT_EQUAL_STRING("'^[a-z]'", parsed_line.right.argv[2]);
-   TEST_ASSERT_NULL(parsed_line.right.in_file);
-   TEST_ASSERT_NULL(parsed_line.right.out_file);
-   TEST_ASSERT_NULL(parsed_line.right.err_file);
-   TEST_ASSERT_EQUAL(0, parsed_line.right.background);
+   // Lab spec says only support one pipe, so multi-pipe should fail
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 // ============================================================================
@@ -380,8 +373,13 @@ void test_parse_pipe_invalid_characters(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   // This should fail because "test with spaces" is not a valid argument
-   TEST_ASSERT_EQUAL(-1, result);
+   // According to lab spec, arguments with spaces are valid
+   TEST_ASSERT_EQUAL(0, result);
+   TEST_ASSERT_EQUAL_STRING("ls", parsed_line.left.argv[0]);
+   TEST_ASSERT_EQUAL_STRING("grep", parsed_line.right.argv[0]);
+   TEST_ASSERT_EQUAL_STRING("test", parsed_line.right.argv[1]);
+   TEST_ASSERT_EQUAL_STRING("with", parsed_line.right.argv[2]);
+   TEST_ASSERT_EQUAL_STRING("spaces", parsed_line.right.argv[3]);
 }
 
 void test_parse_pipe_malformed_redirection(void) {
@@ -480,24 +478,8 @@ void test_parse_pipe_max_arguments(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   TEST_ASSERT_EQUAL(0, result);
-   TEST_ASSERT_EQUAL(1, parsed_line.is_pipeline);
-
-   // Left command should have MAX_ARGS arguments
-   TEST_ASSERT_EQUAL_STRING("cmd1", parsed_line.left.argv[0]);
-   for (int i = 0; i < MAX_ARGS - 1; i++) {
-      char expected_arg[32];
-      snprintf(expected_arg, sizeof(expected_arg), "arg%d", i);
-      TEST_ASSERT_EQUAL_STRING(expected_arg, parsed_line.left.argv[i + 1]);
-   }
-
-   // Right command should have MAX_ARGS arguments
-   TEST_ASSERT_EQUAL_STRING("cmd2", parsed_line.right.argv[0]);
-   for (int i = 0; i < MAX_ARGS - 1; i++) {
-      char expected_arg[32];
-      snprintf(expected_arg, sizeof(expected_arg), "arg%d", i);
-      TEST_ASSERT_EQUAL_STRING(expected_arg, parsed_line.right.argv[i + 1]);
-   }
+   // This should fail because it exceeds MAX_ARGS
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 // Test functions are called from test_runner.c

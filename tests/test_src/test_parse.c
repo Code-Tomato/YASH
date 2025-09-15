@@ -336,7 +336,7 @@ void test_parse_line_empty(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   TEST_ASSERT_EQUAL(1, result);
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 void test_parse_line_whitespace_only(void) {
@@ -346,37 +346,51 @@ void test_parse_line_whitespace_only(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   TEST_ASSERT_EQUAL(1, result);
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 // ============================================================================
-// Token Table Tests
+// Background Execution Tests
 // ============================================================================
 
-void test_token_table_completeness(void) {
-   // Test that all expected tokens are in the table
-   TEST_ASSERT_EQUAL(5, token_table_size);
+void test_parse_background_simple_command(void) {
+   char line[] = "ls -la &";
+   Line parsed_line;
+   memset(&parsed_line, 0, sizeof(parsed_line));
 
-   // Test each token type
-   TEST_ASSERT_EQUAL_STRING("<", token_table[0].lexeme);
-   TEST_ASSERT_EQUAL(TK_REDIR_IN, token_table[0].kind);
-   TEST_ASSERT_EQUAL(0, token_table[0].fd);
+   int result = parse_line(line, &parsed_line);
 
-   TEST_ASSERT_EQUAL_STRING(">", token_table[1].lexeme);
-   TEST_ASSERT_EQUAL(TK_REDIR_OUT, token_table[1].kind);
-   TEST_ASSERT_EQUAL(1, token_table[1].fd);
+   TEST_ASSERT_EQUAL(0, result);
+   TEST_ASSERT_EQUAL_STRING("ls -la &", parsed_line.original);
+   TEST_ASSERT_EQUAL(0, parsed_line.is_pipeline);
+   TEST_ASSERT_EQUAL_STRING("ls", parsed_line.left.argv[0]);
+   TEST_ASSERT_EQUAL_STRING("-la", parsed_line.left.argv[1]);
+   TEST_ASSERT_EQUAL(1, parsed_line.left.background);
+}
 
-   TEST_ASSERT_EQUAL_STRING("2>", token_table[2].lexeme);
-   TEST_ASSERT_EQUAL(TK_REDIR_ERR, token_table[2].kind);
-   TEST_ASSERT_EQUAL(2, token_table[2].fd);
+void test_parse_background_with_redirection(void) {
+   char line[] = "ls > output.txt &";
+   Line parsed_line;
+   memset(&parsed_line, 0, sizeof(parsed_line));
 
-   TEST_ASSERT_EQUAL_STRING("|", token_table[3].lexeme);
-   TEST_ASSERT_EQUAL(TK_PIPE, token_table[3].kind);
-   TEST_ASSERT_EQUAL(-1, token_table[3].fd);
+   int result = parse_line(line, &parsed_line);
 
-   TEST_ASSERT_EQUAL_STRING("&", token_table[4].lexeme);
-   TEST_ASSERT_EQUAL(TK_AMP, token_table[4].kind);
-   TEST_ASSERT_EQUAL(-1, token_table[4].fd);
+   TEST_ASSERT_EQUAL(0, result);
+   TEST_ASSERT_EQUAL_STRING("ls > output.txt &", parsed_line.original);
+   TEST_ASSERT_EQUAL(0, parsed_line.is_pipeline);
+   TEST_ASSERT_EQUAL_STRING("ls", parsed_line.left.argv[0]);
+   TEST_ASSERT_EQUAL_STRING("output.txt", parsed_line.left.out_file);
+   TEST_ASSERT_EQUAL(1, parsed_line.left.background);
+}
+
+void test_parse_background_with_pipe_fails(void) {
+   char line[] = "ls | grep txt &";
+   Line parsed_line;
+   memset(&parsed_line, 0, sizeof(parsed_line));
+
+   int result = parse_line(line, &parsed_line);
+
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 // Test functions are called from test_runner.c

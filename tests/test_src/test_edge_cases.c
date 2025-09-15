@@ -37,8 +37,8 @@ void test_parse_empty_input(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   // Empty input should return 1 (empty line)
-   TEST_ASSERT_EQUAL(1, result);
+   // Empty input should return -1 (invalid)
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 void test_parse_whitespace_only(void) {
@@ -48,8 +48,8 @@ void test_parse_whitespace_only(void) {
 
    int result = parse_line(line, &parsed_line);
 
-   // Whitespace-only input should return 1 (empty line)
-   TEST_ASSERT_EQUAL(1, result);
+   // Whitespace-only input should return -1 (invalid)
+   TEST_ASSERT_EQUAL(-1, result);
 }
 
 void test_parse_newline_only(void) {

@@ -26,7 +26,7 @@ extern void test_parse_line_simple_command(void);
 extern void test_parse_line_too_long(void);
 extern void test_parse_line_empty(void);
 extern void test_parse_line_whitespace_only(void);
-extern void test_token_table_completeness(void);
+extern void test_parse_background_with_pipe_fails(void);
 
 // External test functions from test_redirection.c
 extern void test_parse_input_redirection(void);
@@ -59,6 +59,7 @@ extern void test_parse_redirection_mixed_redirections(void);
 // External test functions from test_pipes.c
 extern void test_parse_simple_pipe(void);
 extern void test_parse_pipe_with_arguments(void);
+extern void test_parse_multi_pipe_rejected(void);
 extern void test_parse_redirection_pipe_with_redirections(void);
 extern void test_parse_redirection_pipe_both_commands_redirections(void);
 extern void test_parse_pipe_missing_left_command(void);
@@ -81,8 +82,6 @@ extern void test_parse_pipe_single_character_commands(void);
 extern void test_parse_pipe_max_arguments(void);
 
 // External test functions from test_jobs.c
-extern void test_parse_background_simple_command(void);
-extern void test_parse_background_with_redirection(void);
 extern void test_parse_background_with_multiple_redirections(void);
 extern void test_parse_background_with_arguments(void);
 extern void test_parse_jobs_command(void);
@@ -181,7 +180,7 @@ extern void test_parse_feature_combinations(void);
 // External test functions from test_yash.c
 extern void test_command_initialization(void);
 extern void test_line_initialization(void);
-extern void test_token_table_constants(void);
+extern void test_token_kind_enum_values(void);
 extern void test_constants_values(void);
 
 void setUp(void) {
@@ -206,7 +205,7 @@ int main(void) {
    RUN_TEST(test_parse_line_too_long);
    RUN_TEST(test_parse_line_empty);
    RUN_TEST(test_parse_line_whitespace_only);
-   RUN_TEST(test_token_table_completeness);
+   RUN_TEST(test_parse_background_with_pipe_fails);
 
    // ============================================================================
    // Redirection Tests
@@ -249,6 +248,7 @@ int main(void) {
    RUN_TEST(test_tokenize_pipe_with_redirections);
    RUN_TEST(test_parse_simple_pipe);
    RUN_TEST(test_parse_pipe_with_arguments);
+   RUN_TEST(test_parse_multi_pipe_rejected);
    RUN_TEST(test_parse_redirection_pipe_with_redirections);
    RUN_TEST(test_parse_redirection_pipe_both_commands_redirections);
    RUN_TEST(test_parse_pipe_missing_left_command);
@@ -275,8 +275,6 @@ int main(void) {
    // ============================================================================
    RUN_TEST(test_tokenize_background_command);
    RUN_TEST(test_tokenize_background_with_redirection);
-   RUN_TEST(test_parse_background_simple_command);
-   RUN_TEST(test_parse_background_with_redirection);
    RUN_TEST(test_parse_background_with_multiple_redirections);
    RUN_TEST(test_parse_background_with_arguments);
    RUN_TEST(test_parse_jobs_command);
@@ -383,7 +381,7 @@ int main(void) {
    // ============================================================================
    RUN_TEST(test_command_initialization);
    RUN_TEST(test_line_initialization);
-   RUN_TEST(test_token_table_constants);
+   RUN_TEST(test_token_kind_enum_values);
    RUN_TEST(test_constants_values);
 
    return UNITY_END();
