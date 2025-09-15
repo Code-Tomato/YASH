@@ -1,0 +1,6 @@
+bin/
+build/
+*.swp
+.DS_Store
+.vscode/
+obj/
