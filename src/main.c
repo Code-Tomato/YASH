@@ -29,7 +29,7 @@ int main() {
 
       Line line;
       memset(&line, 0, sizeof(line));
-      
+
       int result = parse_line(buffer, &line);
       if (result == 0) {
          // TODO: Sprint 2
