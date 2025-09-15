@@ -27,11 +27,12 @@ Thumbs.db
 .cache/
 
 # Editor files (keep VSCode config, ignore user-specific settings)
-.vscode/settings.json
-.vscode/launch.json
-.vscode/tasks.json
+.vscode/
 .idea/
 *.sublime-*
+
+# Generated IDE files
+compile_commands.json
 
 # Log files
 *.log
