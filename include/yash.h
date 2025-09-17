@@ -90,3 +90,13 @@ typedef struct Line {
    Command right;              ///< Right command
    char original[MAX_CMDLINE]; ///< Original command line string
 } Line;
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * @brief Initialize a Command structure to NULL/0 values
+ * @param cmd Pointer to Command structure to initialize
+ */
+void init_command(Command* cmd);

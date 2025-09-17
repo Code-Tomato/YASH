@@ -37,7 +37,7 @@ int main() {
       if (len == MAX_CMDLINE - 1 && buffer[len - 1] != '\n') {
          int c;
          while ((c = getchar()) != EOF && c != '\n');
-         printf("Command too long\n"); // TODO: Check if this is correct from specification
+         DEBUG_PRINT("Command too long\n");
          continue;
       }
 
@@ -53,7 +53,11 @@ int main() {
       int result = parse_line(buffer, &line);
       if (result == 0) {
          DEBUG_PRINT("Parsing successful, executing command");
-         execute_line(&line);
+         int exec_result = execute_line(&line);
+         if (exec_result == -1) {
+            // Internal error (pipe/fork/etc). Log only, no user newline here.
+            DEBUG_PRINT("Execution internal error");
+         }
       } else if (result == -1) {
          DEBUG_PRINT("Parsing failed, invalid command");
          putchar('\n');

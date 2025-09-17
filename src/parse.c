@@ -17,10 +17,6 @@
 #include <string.h>
 
 // ============================================================================
-// Data Structures
-// ============================================================================
-
-// ============================================================================
 // Static Functions
 // ============================================================================
 
@@ -84,13 +80,7 @@ static int fill_command(Command* cmd, char* tokens[], int lo, int hi) {
 
    int args_closed = 0;
 
-   cmd->in_file = NULL;
-   cmd->out_file = NULL;
-   cmd->err_file = NULL;
-   cmd->background = 0;
-   for (int j = 0; j < MAX_ARGS; j++) {
-      cmd->argv[j] = NULL;
-   }
+   init_command(cmd);
 
    int k = 0;
    for (int i = lo; i < hi; i++) {
@@ -131,6 +121,18 @@ static int fill_command(Command* cmd, char* tokens[], int lo, int hi) {
 // ============================================================================
 // Public Functions
 // ============================================================================
+
+void init_command(Command* cmd) {
+   if (!cmd) return;
+
+   cmd->in_file = NULL;
+   cmd->out_file = NULL;
+   cmd->err_file = NULL;
+   cmd->background = 0;
+   for (int j = 0; j < MAX_ARGS; j++) {
+      cmd->argv[j] = NULL;
+   }
+}
 
 int parse_line(char* line, Line* line_out) {
    // Check for NULL input
@@ -186,6 +188,10 @@ int parse_line(char* line, Line* line_out) {
          return -1;
       }
       line_out->left.background = has_amp ? 1 : 0;
+
+      // Initialize right command to NULL/0 when not a pipeline
+      init_command(&line_out->right);
+
       DEBUG_PARSE("├─ Simple Command:");
       DEBUG_COMMAND(&line_out->left);
    } else {
