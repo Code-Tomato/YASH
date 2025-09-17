@@ -13,16 +13,22 @@
 #include "../include/debug.h"
 #include "../include/exec.h"
 #include "../include/parse.h"
+#include "../include/signals.h"
 #include "../include/yash.h"
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 // ============================================================================
 // Main Function
 // ============================================================================
 
 int main() {
+
+   setup_signal_handlers();
+
    DEBUG_PRINT("YASH shell starting");
 
    while (1) {
@@ -59,6 +65,17 @@ int main() {
          if (exec_result == -1) {
             // Internal error (pipe/fork/etc). Log only, no user newline here.
             DEBUG_PRINT("Execution internal error");
+         }
+         // Check if any child processes changed state
+         if (child_status_changed) {
+            child_status_changed = 0; // Reset the flag
+            pid_t pid;
+            int status;
+            // Wait for any child that changed state (died, stopped, continued)
+            while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
+               // Child process changed state - you can handle it here if needed
+               DEBUG_PRINT("Child %d changed state", pid);
+            }
          }
       } else if (result == -1) {
          DEBUG_PRINT("Parsing failed, invalid command");

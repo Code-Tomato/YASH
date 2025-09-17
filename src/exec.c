@@ -52,7 +52,7 @@ static void setup_redirections(const Command* cmd, int p_in_fd, int p_out_fd) {
 
    // Restore the regular signals so that the child process can be cancelled
    signal(SIGINT, SIG_DFL);
-   signal(SIGTSTP, SIG_DFL);
+   signal(SIGTSTP, SIG_DFL); // Child should handle SIGTSTP with default behavior
    signal(SIGPIPE, SIG_DFL);
 
    if (p_in_fd != -1) {
@@ -123,6 +123,9 @@ static int execute_command(const Command* cmd) {
 
    if (pid == 0) {
       // Child process
+      DEBUG_EXEC("Child process starting, PID: %d", getpid());
+      setpgid(0, 0);
+      DEBUG_EXEC("Child process set process group to %d", getpgid(0));
       setup_redirections(cmd, -1, -1);
 
       DEBUG_EXEC("Child process executing command");
@@ -134,10 +137,22 @@ static int execute_command(const Command* cmd) {
       _exit(126);
    } else {
       // Parent process
-      DEBUG_EXEC("Parent process, child PID: %d. Waiting...", pid);
-      int status;
-      waitpid(pid, &status, 0);
+      setpgid(pid, pid);
+      foreground_pgid = pid;
+      DEBUG_EXEC("Parent process, child PID: %d, foreground_pgid set to %d. Waiting...",
+                 pid,
+                 foreground_pgid);
 
+      int status;
+      waitpid(pid, &status, WUNTRACED);
+      DEBUG_EXEC("Child process finished, clearing foreground_pgid");
+      foreground_pgid = 0;
+
+      if (WIFSTOPPED(status)) {
+         // TODO: hook this into jobs later. For now, return to prompt.
+         // (Do NOT print the command here per spec.)
+         return 0;
+      }
       if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
          putchar('\n');
          fflush(stdout);
@@ -235,9 +250,17 @@ static int execute_pipeline(const Command* left, const Command* right) {
    setpgid(left_pid, left_pid);
    setpgid(right_pid, left_pid);
 
+   foreground_pgid = left_pid;
+
    int stL = 0, stR = 0;
-   waitpid(left_pid, &stL, 0);
-   waitpid(right_pid, &stR, 0);
+   waitpid(left_pid, &stL, WUNTRACED);
+   waitpid(right_pid, &stR, WUNTRACED);
+   foreground_pgid = 0;
+
+   if (WIFSTOPPED(stL) || WIFSTOPPED(stR)) {
+      // Whole group is stopped; later this becomes a job entry.
+      return 0;
+   }
 
    int left_not_found = WIFEXITED(stL) && WEXITSTATUS(stL) == 127;
    int right_not_found = WIFEXITED(stR) && WEXITSTATUS(stR) == 127;
