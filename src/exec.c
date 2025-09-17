@@ -12,7 +12,6 @@
 
 #include "../include/exec.h"
 #include "../include/debug.h"
-#include "../include/yash.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
