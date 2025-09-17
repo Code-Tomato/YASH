@@ -11,15 +11,10 @@
 // ============================================================================
 
 #include "../include/parse.h"
+#include "../include/debug.h"
 #include "../include/yash.h"
 #include <stdio.h>
 #include <string.h>
-
-// ============================================================================
-// Defines
-// ============================================================================
-
-#define DEBUG 1
 
 // ============================================================================
 // Data Structures
@@ -143,9 +138,12 @@ int parse_line(char* line, Line* line_out) {
       return -1;
    }
 
+   DEBUG_PARSE("Parsing line: \"%s\"", line);
+
    // Parse the line
    if (strnlen(line, MAX_CMDLINE) == MAX_CMDLINE) {
       // Means the input filled the buffer without room for '\0' or is more than 2000 characters
+      DEBUG_PARSE("Line too long (>= %d characters)", MAX_CMDLINE);
       return -1;
    }
 
@@ -154,38 +152,67 @@ int parse_line(char* line, Line* line_out) {
    char* tokens[MAX_TOKENS];
    int num_tokens = 0;
    int result = tokenize_line(line, tokens, &num_tokens);
-   if (result == -1) return -1;
-
-   if (num_tokens == 0) return -1;
-
-   if (DEBUG) {
-      for (int i = 0; i < num_tokens; i++) {
-         fprintf(stderr, "token[%d] = \"%s\"\n", i, tokens[i]);
-      }
+   if (result == -1) {
+      DEBUG_PARSE("Tokenization failed");
+      return -1;
    }
+
+   if (num_tokens == 0) {
+      DEBUG_PARSE("No tokens found");
+      return -1;
+   }
+
+   DEBUG_PARSE("┌─ Tokenization Results (%d tokens)", num_tokens);
+   for (int i = 0; i < num_tokens; i++) {
+      DEBUG_PARSE("│  [%d] \"%s\"", i, tokens[i]);
+   }
+   DEBUG_PARSE("└─ End Tokenization");
 
    // Match the tokens
    int pipe_idx = -1;
    int has_amp = 0;
-   if (analyze_structure(tokens, num_tokens, &pipe_idx, &has_amp) == -1) return -1;
+   if (analyze_structure(tokens, num_tokens, &pipe_idx, &has_amp) == -1) {
+      DEBUG_PARSE("Invalid command structure");
+      return -1;
+   }
 
    line_out->is_pipeline = (pipe_idx != -1);
+   DEBUG_PARSE("Command type: %s", line_out->is_pipeline ? "pipeline" : "simple");
 
    if (pipe_idx == -1) {
       int hi = has_amp ? num_tokens - 1 : num_tokens;
-      if (fill_command(&line_out->left, tokens, 0, hi) == -1) return -1;
+      if (fill_command(&line_out->left, tokens, 0, hi) == -1) {
+         DEBUG_PARSE("Failed to fill simple command");
+         return -1;
+      }
       line_out->left.background = has_amp ? 1 : 0;
+      DEBUG_PARSE("├─ Simple Command:");
+      DEBUG_COMMAND(&line_out->left);
    } else {
       int left_lo = 0, left_hi = pipe_idx;
       int right_lo = pipe_idx + 1;
       int right_hi = num_tokens;
-      if (left_hi <= left_lo || right_hi <= right_lo) return -1;
-      if (fill_command(&line_out->left, tokens, left_lo, left_hi) == -1) return -1;
-      if (fill_command(&line_out->right, tokens, right_lo, right_hi) == -1) return -1;
+      if (left_hi <= left_lo || right_hi <= right_lo) {
+         DEBUG_PARSE("Invalid pipeline structure");
+         return -1;
+      }
+      if (fill_command(&line_out->left, tokens, left_lo, left_hi) == -1) {
+         DEBUG_PARSE("Failed to fill left command in pipeline");
+         return -1;
+      }
+      if (fill_command(&line_out->right, tokens, right_lo, right_hi) == -1) {
+         DEBUG_PARSE("Failed to fill right command in pipeline");
+         return -1;
+      }
       line_out->left.background = 0;  // Pipelines can't be background
       line_out->right.background = 0; // Pipelines can't be background
+      DEBUG_PARSE("├─ Left Command (Pipeline):");
+      DEBUG_COMMAND(&line_out->left);
+      DEBUG_PARSE("├─ Right Command (Pipeline):");
+      DEBUG_COMMAND(&line_out->right);
    }
 
+   DEBUG_PARSE("Parsing completed successfully");
    return 0;
 }
 

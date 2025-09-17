@@ -10,6 +10,8 @@
 // Includes
 // ============================================================================
 
+#include "../include/debug.h"
+#include "../include/exec.h"
 #include "../include/parse.h"
 #include "../include/yash.h"
 #include <stdio.h>
@@ -20,12 +22,14 @@
 // ============================================================================
 
 int main() {
+   DEBUG_PRINT("YASH shell starting");
    while (1) {
       printf("# ");
       fflush(stdout);
 
       char buffer[MAX_CMDLINE];
       if (!fgets(buffer, sizeof(buffer), stdin)) {
+         DEBUG_PRINT("EOF received, exiting shell");
          break;
       }
 
@@ -33,7 +37,7 @@ int main() {
       if (len == MAX_CMDLINE - 1 && buffer[len - 1] != '\n') {
          int c;
          while ((c = getchar()) != EOF && c != '\n');
-         // printf("Command too long, try again\n");
+         printf("Command too long\n"); // TODO: Check if this is correct from specification
          continue;
       }
 
@@ -48,8 +52,10 @@ int main() {
 
       int result = parse_line(buffer, &line);
       if (result == 0) {
-         // TODO: Sprint 2
+         DEBUG_PRINT("Parsing successful, executing command");
+         execute_line(&line);
       } else if (result == -1) {
+         DEBUG_PRINT("Parsing failed, invalid command");
          putchar('\n');
          fflush(stdout);
       }
