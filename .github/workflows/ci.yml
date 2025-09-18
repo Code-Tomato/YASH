@@ -22,24 +22,32 @@ jobs:
       run: |
         echo "Setting up build environment on ${{ matrix.os }}"
         if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-          sudo apt-get update
-          sudo apt-get install -y build-essential gcc
+          sudo apt-get update -qq
+          sudo apt-get install -y build-essential gcc doxygen graphviz
+        elif [ "${{ matrix.os }}" = "macos-latest" ]; then
+          brew install doxygen graphviz
         fi
+      timeout-minutes: 10
         
     - name: Build project
       run: make clean && make all
+      timeout-minutes: 5
       
     - name: Run tests
       run: make test
+      timeout-minutes: 5
       
     - name: Check for memory leaks (Linux only)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get install -y valgrind
         valgrind --leak-check=full --error-exitcode=1 ./build/test/test_runner
+      timeout-minutes: 15
         
     - name: Generate documentation
       run: make docs
+      continue-on-error: true
+      timeout-minutes: 5
       
     - name: Upload test results
       uses: actions/upload-artifact@v4
@@ -61,8 +69,9 @@ jobs:
       
     - name: Install clang-format
       run: |
-        sudo apt-get update
+        sudo apt-get update -qq
         sudo apt-get install -y clang-format
+      timeout-minutes: 5
         
     - name: Check code formatting
       run: |
@@ -73,9 +82,11 @@ jobs:
           git diff
           exit 1
         fi
+      timeout-minutes: 5
         
     - name: Static analysis with cppcheck
       run: |
         sudo apt-get install -y cppcheck
         cppcheck --enable=all --inconclusive --std=c99 --suppress=missingIncludeSystem src/ include/
+      timeout-minutes: 10
         
