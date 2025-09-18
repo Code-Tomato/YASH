@@ -12,6 +12,7 @@
 
 #include "../include/exec.h"
 #include "../include/debug.h"
+#include "../include/jobs.h"
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -97,9 +98,10 @@ static void setup_redirections(const Command* cmd, int p_in_fd, int p_out_fd) {
  * @brief Executes non-piped commands
  *
  * @param cmd
+ * @param original Original command line string for job tracking
  * @return int
  */
-static int execute_command(const Command* cmd) {
+static int execute_command(const Command* cmd, const char* original) {
 
    DEBUG_EXEC("Executing the command!!!");
 
@@ -114,51 +116,82 @@ static int execute_command(const Command* cmd) {
       return 0;
    }
 
-   pid_t pid = fork();
+   if (cmd->background) {
+      pid_t pid = fork();
 
-   if (pid < 0) { // fork() failed
-      DEBUG_EXEC("fork() failed (execute_command): %s", strerror(errno));
-      return -1;
-   }
+      if (pid < 0) { // fork() failed
+         DEBUG_EXEC("fork() failed (execute_command): %s", strerror(errno));
+         return -1;
+      }
 
-   if (pid == 0) {
-      // Child process
-      DEBUG_EXEC("Child process starting, PID: %d", getpid());
-      setpgid(0, 0);
-      DEBUG_EXEC("Child process set process group to %d", getpgid(0));
-      setup_redirections(cmd, -1, -1);
+      if (pid == 0) {
+         // Child
+         DEBUG_EXEC("Child process starting, PID: %d", getpid());
+         setpgid(0, 0);
+         DEBUG_EXEC("Child process set process group to %d", getpgid(0));
+         setup_redirections(cmd, -1, -1);
 
-      DEBUG_EXEC("Child process executing command");
-      execvp(cmd->argv[0], cmd->argv);
+         DEBUG_EXEC("Child process executing command");
+         execvp(cmd->argv[0], cmd->argv);
 
-      // You shouldn't be here :(
-      DEBUG_EXEC("execvp failed: %s", strerror(errno));
-      if (errno == ENOENT) _exit(127);
-      _exit(126);
-   } else {
-      // Parent process
-      setpgid(pid, pid);
-      foreground_pgid = pid;
-      DEBUG_EXEC("Parent process, child PID: %d, foreground_pgid set to %d. Waiting...",
-                 pid,
-                 foreground_pgid);
+         // You shouldn't be here :(
+         DEBUG_EXEC("execvp failed: %s", strerror(errno));
+         if (errno == ENOENT) _exit(127);
+         _exit(126);
+      } else {
+         // Parent (No wait)
+         setpgid(pid, pid);
+         jobs_add(pid, original, 1); // Add background job to job table
 
-      int status;
-      waitpid(pid, &status, WUNTRACED);
-      DEBUG_EXEC("Child process finished, clearing foreground_pgid");
-      foreground_pgid = 0;
-
-      if (WIFSTOPPED(status)) {
-         // TODO: hook this into jobs later. For now, return to prompt.
-         // (Do NOT print the command here per spec.)
          return 0;
       }
-      if (WIFEXITED(status) && WEXITSTATUS(status) == 127) {
-         putchar('\n');
-         fflush(stdout);
+
+   } else {
+
+      pid_t pid = fork();
+
+      if (pid < 0) { // fork() failed
+         DEBUG_EXEC("fork() failed (execute_command): %s", strerror(errno));
+         return -1;
       }
 
-      // TODO: For now I ignored stopped/continue
+      if (pid == 0) {
+         // Child process
+         DEBUG_EXEC("Child process starting, PID: %d", getpid());
+         setpgid(0, 0);
+         DEBUG_EXEC("Child process set process group to %d", getpgid(0));
+         setup_redirections(cmd, -1, -1);
+
+         DEBUG_EXEC("Child process executing command");
+         execvp(cmd->argv[0], cmd->argv);
+
+         // You shouldn't be here :(
+         DEBUG_EXEC("execvp failed: %s", strerror(errno));
+         if (errno == ENOENT) _exit(127);
+         _exit(126);
+      } else {
+         // Parent process
+         setpgid(pid, pid);
+         foreground_pgid = pid;
+         DEBUG_EXEC("Parent process, child PID: %d, foreground_pgid set to %d. Waiting...",
+                    pid,
+                    foreground_pgid);
+
+         int status;
+         waitpid(pid, &status, WUNTRACED);
+         DEBUG_EXEC("Child process finished, clearing foreground_pgid");
+         foreground_pgid = 0;
+
+         if (WIFSTOPPED(status)) {
+            // Add stopped job to job table
+            jobs_add(pid, original, 0);
+            return 0;
+         }
+         // Don't print extra newlines - let commands handle their own output formatting
+         // The shell should not add newlines to command output
+
+         // TODO: For now I ignored stopped/continue
+      }
    }
 
    return 0;
@@ -169,9 +202,10 @@ static int execute_command(const Command* cmd) {
  *
  * @param left
  * @param right
+ * @param original Original command line string for job tracking
  * @return int
  */
-static int execute_pipeline(const Command* left, const Command* right) {
+static int execute_pipeline(const Command* left, const Command* right, const char* original) {
    // Can assume:
    // - left is not NULL and left->argv[0] exists
    // both left and right are guaranteed validright->argv[0] for pipelines
@@ -258,17 +292,13 @@ static int execute_pipeline(const Command* left, const Command* right) {
    foreground_pgid = 0;
 
    if (WIFSTOPPED(stL) || WIFSTOPPED(stR)) {
-      // Whole group is stopped; later this becomes a job entry.
+      // Whole group is stopped; add it as a stopped job
+      jobs_add(left_pid, original, 0);
       return 0;
    }
 
-   int left_not_found = WIFEXITED(stL) && WEXITSTATUS(stL) == 127;
-   int right_not_found = WIFEXITED(stR) && WEXITSTATUS(stR) == 127;
-   if (left_not_found || right_not_found) {
-      DEBUG_EXEC("Left or right command not found");
-      putchar('\n');
-      fflush(stdout);
-   }
+   // Don't print extra newlines - let commands handle their own output formatting
+   // The shell should not add newlines to command output
    return 0;
 }
 
@@ -282,10 +312,89 @@ int execute_line(Line* line) {
    // - line->is_pipeline is correctly set
    // - line->left is always valid
    // - line->right is valid if is_pipeline==1, or NULL-initialized if is_pipeline==0
+
+   // Handle built-in commands (only for non-pipeline commands)
+   if (!line->is_pipeline && line->left.argv[0]) {
+      if (strcmp(line->left.argv[0], "exit") == 0) {
+         exit(0);
+      } else if (strcmp(line->left.argv[0], "jobs") == 0) {
+         jobs_print();
+         return 0;
+      } else if (strcmp(line->left.argv[0], "fg") == 0) {
+         int jid = jobs_pick_most_recent_for_fg();
+         if (jid == -1) {
+            printf("fg: no current job\n");
+            return 0;
+         }
+         pid_t pg = jobs_get_pgid(jid);
+         if (pg == -1) {
+            printf("fg: job not found\n");
+            return 0;
+         }
+         const char* s = jobs_get_cmdline(jid);
+         if (s) {
+            // Trim trailing " &" if present
+            char trimmed[MAX_CMDLINE];
+            strncpy(trimmed, s, MAX_CMDLINE - 1);
+            trimmed[MAX_CMDLINE - 1] = '\0';
+
+            size_t len = strlen(trimmed);
+            // Remove trailing whitespace
+            while (len > 0 && (trimmed[len - 1] == ' ' || trimmed[len - 1] == '\t')) {
+               len--;
+            }
+            // Remove trailing & if present
+            if (len > 0 && trimmed[len - 1] == '&') {
+               len--;
+            }
+            // Remove any remaining trailing whitespace
+            while (len > 0 && (trimmed[len - 1] == ' ' || trimmed[len - 1] == '\t')) {
+               len--;
+            }
+            trimmed[len] = '\0';
+
+            puts(trimmed);
+            fflush(stdout);
+         }
+         kill(-pg, SIGCONT);
+         foreground_pgid = pg;
+         int status;
+         while (waitpid(-pg, &status, WUNTRACED) > 0) {
+            // Handle each process in the group
+         }
+         foreground_pgid = 0;
+
+         if (WIFSTOPPED(status)) {
+            jobs_mark(pg, JOB_STOPPED);
+         } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
+            jobs_mark(pg, JOB_DONE);
+         }
+         return 0;
+      } else if (strcmp(line->left.argv[0], "bg") == 0) {
+         int jid = jobs_pick_most_recent_stopped_for_bg();
+         if (jid == -1) {
+            printf("bg: no current job\n");
+            return 0;
+         }
+         pid_t pg = jobs_get_pgid(jid);
+         if (pg == -1) {
+            printf("bg: job not found\n");
+            return 0;
+         }
+         kill(-pg, SIGCONT);
+         jobs_mark(pg, JOB_RUNNING);
+         jobs_set_background(pg, 1);
+
+         // Print the job info
+         jobs_print_one(jid);
+         return 0;
+      }
+   }
+
    if (line->is_pipeline) {
-      return execute_pipeline(&line->left, &line->right);
+      return execute_pipeline(&line->left, &line->right, line->original);
    } else {
       DEBUG_EXEC("No pipeline - executing single command");
-      return execute_command(&line->left);
+      return execute_command(&line->left, line->original);
    }
 }

@@ -12,14 +12,15 @@
 
 #include "../include/debug.h"
 #include "../include/exec.h"
+#include "../include/jobs.h"
 #include "../include/parse.h"
 #include "../include/signals.h"
 #include "../include/yash.h"
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 // ============================================================================
 // Main Function
@@ -28,10 +29,33 @@
 int main() {
 
    setup_signal_handlers();
+   jobs_init();
 
    DEBUG_PRINT("YASH shell starting");
 
    while (1) {
+      // Check for any background job state changes first
+      if (child_status_changed) {
+         child_status_changed = 0;
+         pid_t pid;
+         int status;
+         while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
+            pid_t pg = getpgid(pid);
+            pid_t key = (pg == -1) ? pid : pg; // fallback to PID if getpgid fails
+            if (WIFSTOPPED(status)) {
+               jobs_mark(key, JOB_STOPPED);
+            } else if (WIFCONTINUED(status)) {
+               jobs_mark(key, JOB_RUNNING);
+            } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
+               jobs_mark(key, JOB_DONE);
+            }
+            DEBUG_PRINT("Background child %d changed state", pid);
+         }
+      }
+
+      // Reap done jobs and print "Done" messages before prompt
+      jobs_reap_done_and_print();
+
       printf("# ");
       fflush(stdout);
 
@@ -73,13 +97,21 @@ int main() {
             int status;
             // Wait for any child that changed state (died, stopped, continued)
             while ((pid = waitpid(-1, &status, WNOHANG | WUNTRACED | WCONTINUED)) > 0) {
-               // Child process changed state - you can handle it here if needed
+               // Child process changed state - update job table
+               pid_t pg = getpgid(pid);
+               pid_t key = (pg == -1) ? pid : pg; // fallback to PID if getpgid fails
+               if (WIFSTOPPED(status)) {
+                  jobs_mark(key, JOB_STOPPED);
+               } else if (WIFCONTINUED(status)) {
+                  jobs_mark(key, JOB_RUNNING);
+               } else if (WIFEXITED(status) || WIFSIGNALED(status)) {
+                  jobs_mark(key, JOB_DONE);
+               }
                DEBUG_PRINT("Child %d changed state", pid);
             }
          }
       } else if (result == -1) {
          DEBUG_PRINT("Parsing failed, invalid command");
-         putchar('\n');
          fflush(stdout);
       }
    }
