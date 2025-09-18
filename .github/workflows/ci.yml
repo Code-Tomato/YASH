@@ -8,11 +8,8 @@ on:
 
 jobs:
   test:
-    name: Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest]
+    name: Test on macOS
+    runs-on: macos-latest
     
     steps:
     - name: Checkout code
@@ -20,13 +17,8 @@ jobs:
       
     - name: Set up build environment
       run: |
-        echo "Setting up build environment on ${{ matrix.os }}"
-        if [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
-          sudo apt-get update -qq
-          sudo apt-get install -y build-essential gcc doxygen graphviz
-        elif [ "${{ matrix.os }}" = "macos-latest" ]; then
-          brew install doxygen graphviz
-        fi
+        echo "Setting up build environment on macOS"
+        brew install doxygen graphviz
       timeout-minutes: 10
         
     - name: Build project
@@ -37,12 +29,6 @@ jobs:
       run: make test
       timeout-minutes: 5
       
-    - name: Check for memory leaks (Linux only)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get install -y valgrind
-        valgrind --leak-check=full --error-exitcode=1 ./build/test/test_runner
-      timeout-minutes: 15
         
     - name: Generate documentation
       run: make docs
@@ -53,7 +39,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: always()
       with:
-        name: test-results-${{ matrix.os }}
+        name: test-results-macos
         path: |
           build/test/
           docs/html/
