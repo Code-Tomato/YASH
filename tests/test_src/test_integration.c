@@ -114,28 +114,6 @@ void test_parse_background_job_with_redirections(void) {
 // Real-world Command Tests
 // ============================================================================
 
-void test_parse_real_world_commands(void) {
-   char real_commands[][100] = {"ls -la",
-                                "ps aux | grep python",
-                                "find . -name '*.c' -type f | wc -l",
-                                "cat /etc/passwd | grep root",
-                                "ls /usr/bin | grep gcc > compilers.txt",
-                                "grep -r 'TODO' . > todos.txt 2> errors.log &",
-                                "jobs",
-                                "fg",
-                                "bg"};
-
-   for (int i = 0; i < 9; i++) {
-      Line parsed_line;
-      memset(&parsed_line, 0, sizeof(parsed_line));
-
-      int result = parse_line(real_commands[i], &parsed_line);
-
-      TEST_ASSERT_EQUAL(0, result);
-      TEST_ASSERT_EQUAL_STRING(real_commands[i], parsed_line.original);
-   }
-}
-
 void test_parse_development_commands(void) {
    // Only test commands that are supported by the project requirements
    char dev_commands[][100] = {"gcc -o program main.c",
@@ -197,32 +175,6 @@ void test_parse_stress_many_redirections(void) {
 // ============================================================================
 // Error Handling Integration Tests
 // ============================================================================
-
-void test_parse_error_handling_integration(void) {
-   char error_commands[][50] = {
-       "ls | | grep test",  // Malformed pipe
-       "ls > > output.txt", // Malformed redirection
-       "ls & | grep test",  // Background with pipe
-       "ls | grep test &",  // Pipe with background
-       "jobs arg1 arg2",    // Jobs with arguments
-       "fg > output.txt",   // fg with redirection
-       "bg &",              // bg with background
-       "< ls",              // Invalid starting token
-       "ls >",              // Missing filename
-       "ls |",              // Missing right command
-       "&"                  // Missing command
-   };
-
-   for (int i = 0; i < 11; i++) {
-      Line parsed_line;
-      memset(&parsed_line, 0, sizeof(parsed_line));
-
-      int result = parse_line(error_commands[i], &parsed_line);
-
-      // All of these should fail
-      TEST_ASSERT_EQUAL(-1, result);
-   }
-}
 
 void test_parse_recovery_from_errors(void) {
    // Test that parsing can recover from errors

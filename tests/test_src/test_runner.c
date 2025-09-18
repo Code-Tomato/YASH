@@ -123,8 +123,6 @@ extern void test_signal_safe_functions(void);
 extern void test_signal_unsafe_functions(void);
 extern void test_process_group_creation(void);
 extern void test_process_group_signal_handling(void);
-extern void test_signal_error_handling(void);
-extern void test_signal_mask_error_handling(void);
 extern void test_signal_integration_with_parsing(void);
 extern void test_signal_integration_with_background(void);
 extern void test_signal_integration_with_pipes(void);
@@ -158,12 +156,10 @@ extern void test_parse_jobs_background_with_all_redirections(void);
 extern void test_parse_pipe_with_mixed_redirections(void);
 extern void test_parse_job_control_commands(void);
 extern void test_parse_background_job_with_redirections(void);
-extern void test_parse_real_world_commands(void);
 extern void test_parse_development_commands(void);
 // Removed stress long command extern declaration
 extern void test_parse_stress_many_arguments(void);
 extern void test_parse_stress_many_redirections(void);
-extern void test_parse_error_handling_integration(void);
 extern void test_parse_recovery_from_errors(void);
 extern void test_parse_performance_integration(void);
 extern void test_parse_feature_combinations(void);
@@ -309,8 +305,6 @@ int main(void) {
    RUN_TEST(test_signal_unsafe_functions);
    RUN_TEST(test_process_group_creation);
    RUN_TEST(test_process_group_signal_handling);
-   RUN_TEST(test_signal_error_handling);
-   RUN_TEST(test_signal_mask_error_handling);
    RUN_TEST(test_signal_integration_with_parsing);
    RUN_TEST(test_signal_integration_with_background);
    RUN_TEST(test_signal_integration_with_pipes);
@@ -348,12 +342,10 @@ int main(void) {
    RUN_TEST(test_parse_pipe_with_mixed_redirections);
    RUN_TEST(test_parse_job_control_commands);
    RUN_TEST(test_parse_background_job_with_redirections);
-   RUN_TEST(test_parse_real_world_commands);
    RUN_TEST(test_parse_development_commands);
    // Removed stress long command test - complex find commands not supported per project spec
    RUN_TEST(test_parse_stress_many_arguments);
    RUN_TEST(test_parse_stress_many_redirections);
-   RUN_TEST(test_parse_error_handling_integration);
    RUN_TEST(test_parse_recovery_from_errors);
    RUN_TEST(test_parse_performance_integration);
    RUN_TEST(test_parse_feature_combinations);

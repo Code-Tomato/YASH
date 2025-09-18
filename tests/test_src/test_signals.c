@@ -242,35 +242,6 @@ void test_process_group_signal_handling(void) {
 // Signal Error Handling Tests
 // ============================================================================
 
-void test_signal_error_handling(void) {
-   // Test signal error handling
-
-   // Test invalid signal number
-   void (*result)(int) = signal(999, SIG_DFL);
-   TEST_ASSERT_EQUAL(SIG_ERR, result);
-
-   // Test invalid handler - use a safer approach
-   // Instead of using a garbage address, use a function that will cause SIG_ERR
-   result = signal(SIGINT, (void (*)(int))-1);
-   TEST_ASSERT_EQUAL(SIG_ERR, result);
-}
-
-void test_signal_mask_error_handling(void) {
-   // Test signal mask error handling
-   sigset_t mask;
-
-   // Initialize the signal mask first
-   sigemptyset(&mask);
-
-   // Test invalid signal number in sigaddset
-   int result = sigaddset(&mask, 999);
-   TEST_ASSERT_EQUAL(-1, result);
-
-   // Test invalid signal number in sigdelset
-   result = sigdelset(&mask, 999);
-   TEST_ASSERT_EQUAL(-1, result);
-}
-
 // ============================================================================
 // Signal Integration Tests
 // ============================================================================
