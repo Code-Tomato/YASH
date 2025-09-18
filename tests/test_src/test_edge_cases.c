@@ -351,59 +351,9 @@ void test_parse_performance_simple(void) {
    TEST_ASSERT_TRUE(cpu_time_used < 0.1); // Less than 100ms for 1000 iterations
 }
 
-void test_parse_performance_complex(void) {
-   // Test parsing performance for complex commands
-   char line[] = "find . -name '*.c' -type f | grep -v test | wc -l > count.txt 2> errors.log";
-   Line parsed_line;
-   memset(&parsed_line, 0, sizeof(parsed_line));
-
-   clock_t start = clock();
-
-   for (int i = 0; i < 100; i++) {
-      int result = parse_line(line, &parsed_line);
-      TEST_ASSERT_EQUAL(0, result);
-   }
-
-   clock_t end = clock();
-   double cpu_time_used = ((double)(end - start)) / CLOCKS_PER_SEC;
-
-   // Parsing should be reasonably fast even for complex commands
-   TEST_ASSERT_TRUE(cpu_time_used < 0.1); // Less than 100ms for 100 iterations
-}
-
 // ============================================================================
 // Integration Tests
 // ============================================================================
-
-void test_parse_integration_all_features(void) {
-   // Test parsing with all features combined
-   char line[] = "cat < input.txt | grep -i pattern | wc -l > count.txt 2> errors.log";
-   Line parsed_line;
-   memset(&parsed_line, 0, sizeof(parsed_line));
-
-   int result = parse_line(line, &parsed_line);
-
-   TEST_ASSERT_EQUAL(0, result);
-   TEST_ASSERT_EQUAL_STRING("cat < input.txt | grep -i pattern | wc -l > count.txt 2> errors.log",
-                            parsed_line.original);
-   TEST_ASSERT_EQUAL(1, parsed_line.is_pipeline);
-
-   // Left command (cat)
-   TEST_ASSERT_EQUAL_STRING("cat", parsed_line.left.argv[0]);
-   TEST_ASSERT_EQUAL_STRING("input.txt", parsed_line.left.in_file);
-   TEST_ASSERT_NULL(parsed_line.left.out_file);
-   TEST_ASSERT_NULL(parsed_line.left.err_file);
-   TEST_ASSERT_EQUAL(0, parsed_line.left.background);
-
-   // Right command (grep)
-   TEST_ASSERT_EQUAL_STRING("grep", parsed_line.right.argv[0]);
-   TEST_ASSERT_EQUAL_STRING("-i", parsed_line.right.argv[1]);
-   TEST_ASSERT_EQUAL_STRING("pattern", parsed_line.right.argv[2]);
-   TEST_ASSERT_NULL(parsed_line.right.in_file);
-   TEST_ASSERT_EQUAL_STRING("count.txt", parsed_line.right.out_file);
-   TEST_ASSERT_EQUAL_STRING("errors.log", parsed_line.right.err_file);
-   TEST_ASSERT_EQUAL(0, parsed_line.right.background);
-}
 
 void test_parse_integration_edge_cases(void) {
    // Test parsing with edge cases

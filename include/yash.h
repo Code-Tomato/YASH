@@ -43,7 +43,10 @@
 // Globals
 // ============================================================================
 
+/** @brief Flag indicating that a child process status has changed */
 extern volatile sig_atomic_t child_status_changed;
+
+/** @brief Process group ID of the current foreground process */
 extern pid_t foreground_pgid;
 
 // ============================================================================

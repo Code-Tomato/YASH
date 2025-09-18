@@ -25,22 +25,22 @@
 // ============================================================================
 
 #ifdef DEBUG
-// General debug printing
+/** @brief General debug printing macro */
 #define DEBUG_PRINT(fmt, ...) fprintf(stderr, "[DEBUG] " fmt "\n", ##__VA_ARGS__)
 
-// Parse-specific debug
+/** @brief Parse-specific debug printing macro */
 #define DEBUG_PARSE(fmt, ...) fprintf(stderr, "[PARSE] " fmt "\n", ##__VA_ARGS__)
 
-// Execution debug
+/** @brief Execution debug printing macro */
 #define DEBUG_EXEC(fmt, ...) fprintf(stderr, "[EXEC] " fmt "\n", ##__VA_ARGS__)
 
-// Job control debug
+/** @brief Job control debug printing macro */
 #define DEBUG_JOBS(fmt, ...) fprintf(stderr, "[JOBS] " fmt "\n", ##__VA_ARGS__)
 
-// Signal handling debug
+/** @brief Signal handling debug printing macro */
 #define DEBUG_SIGNALS(fmt, ...) fprintf(stderr, "[SIGNALS] " fmt "\n", ##__VA_ARGS__)
 
-// Command structure debug
+/** @brief Command structure debug printing macro */
 #define DEBUG_COMMAND(cmd)                                                                         \
    do {                                                                                            \
       DEBUG_PARSE("┌─ Parsed Command Structure");                                                  \
@@ -57,24 +57,33 @@
       DEBUG_PARSE("└─ End Command Structure");                                                     \
    } while (0)
 
-// Process debug
+/** @brief Process debug printing macro */
 #define DEBUG_PROCESS(pid, status) DEBUG_EXEC("Process PID %d, status: %d", pid, status)
 
-// Job debug
+/** @brief Job debug printing macro */
 #define DEBUG_JOB(job_id, pid, status) DEBUG_JOBS("Job %d: PID %d, status: %d", job_id, pid, status)
 
-// Signal debug
+/** @brief Signal debug printing macro */
 #define DEBUG_SIGNAL(sig, action) DEBUG_SIGNALS("Signal %d: %s", sig, action)
 
 #else
 // No-op versions when DEBUG is disabled
+/** @brief No-op version of DEBUG_PRINT when DEBUG is disabled */
 #define DEBUG_PRINT(fmt, ...)
+/** @brief No-op version of DEBUG_PARSE when DEBUG is disabled */
 #define DEBUG_PARSE(fmt, ...)
+/** @brief No-op version of DEBUG_EXEC when DEBUG is disabled */
 #define DEBUG_EXEC(fmt, ...)
+/** @brief No-op version of DEBUG_JOBS when DEBUG is disabled */
 #define DEBUG_JOBS(fmt, ...)
+/** @brief No-op version of DEBUG_SIGNALS when DEBUG is disabled */
 #define DEBUG_SIGNALS(fmt, ...)
+/** @brief No-op version of DEBUG_COMMAND when DEBUG is disabled */
 #define DEBUG_COMMAND(cmd)
+/** @brief No-op version of DEBUG_PROCESS when DEBUG is disabled */
 #define DEBUG_PROCESS(pid, status)
+/** @brief No-op version of DEBUG_JOB when DEBUG is disabled */
 #define DEBUG_JOB(job_id, pid, status)
+/** @brief No-op version of DEBUG_SIGNAL when DEBUG is disabled */
 #define DEBUG_SIGNAL(sig, action)
 #endif

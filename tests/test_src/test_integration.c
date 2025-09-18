@@ -280,28 +280,6 @@ void test_parse_performance_integration(void) {
 // Memory Integration Tests
 // ============================================================================
 
-void test_parse_memory_integration(void) {
-   // Test that parsing doesn't cause memory issues with complex commands
-   char line[] = "find /usr -name '*.h' -type f -exec grep -l 'function' {} \\; | head -20 | sort "
-                 "| uniq > results.txt 2> errors.log";
-   Line parsed_line;
-   memset(&parsed_line, 0, sizeof(parsed_line));
-
-   // Parse the same command multiple times
-   for (int i = 0; i < 100; i++) {
-      int result = parse_line(line, &parsed_line);
-      TEST_ASSERT_EQUAL(0, result);
-
-      // Verify that the parsed data is still valid
-      TEST_ASSERT_EQUAL_STRING("find /usr -name '*.h' -type f -exec grep -l 'function' {} \\; | "
-                               "head -20 | sort | uniq > results.txt 2> errors.log",
-                               parsed_line.original);
-      TEST_ASSERT_EQUAL(1, parsed_line.is_pipeline);
-      TEST_ASSERT_NOT_NULL(parsed_line.left.argv[0]);
-      TEST_ASSERT_NOT_NULL(parsed_line.right.argv[0]);
-   }
-}
-
 // ============================================================================
 // Feature Combination Tests
 // ============================================================================

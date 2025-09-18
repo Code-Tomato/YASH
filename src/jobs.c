@@ -11,7 +11,6 @@
 // ============================================================================
 
 #include "../include/jobs.h"
-#include "../include/debug.h"
 #include "../include/yash.h"
 #include <stdio.h>
 #include <string.h>

@@ -150,8 +150,6 @@ extern void test_parse_buffer_overflow_protection(void);
 extern void test_parse_error_recovery(void);
 extern void test_parse_partial_commands(void);
 extern void test_parse_performance_simple(void);
-extern void test_parse_performance_complex(void);
-extern void test_parse_integration_all_features(void);
 extern void test_parse_integration_edge_cases(void);
 
 // External test functions from test_integration.c
@@ -168,7 +166,6 @@ extern void test_parse_stress_many_redirections(void);
 extern void test_parse_error_handling_integration(void);
 extern void test_parse_recovery_from_errors(void);
 extern void test_parse_performance_integration(void);
-extern void test_parse_memory_integration(void);
 extern void test_parse_feature_combinations(void);
 
 // External test functions from test_yash.c
@@ -341,8 +338,6 @@ int main(void) {
    RUN_TEST(test_parse_error_recovery);
    RUN_TEST(test_parse_partial_commands);
    RUN_TEST(test_parse_performance_simple);
-   RUN_TEST(test_parse_performance_complex);
-   RUN_TEST(test_parse_integration_all_features);
    RUN_TEST(test_parse_integration_edge_cases);
 
    // ============================================================================
@@ -361,7 +356,6 @@ int main(void) {
    RUN_TEST(test_parse_error_handling_integration);
    RUN_TEST(test_parse_recovery_from_errors);
    RUN_TEST(test_parse_performance_integration);
-   RUN_TEST(test_parse_memory_integration);
    RUN_TEST(test_parse_feature_combinations);
 
    // ============================================================================

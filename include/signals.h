@@ -14,32 +14,23 @@
 
 /**
  * @brief Setup signal handlers for SIGINT, SIGTSTP, and SIGCHLD
- *
- * @param void
- * @return void
  */
 void setup_signal_handlers(void);
 
 /**
  * @brief SIGCHLD handler
- *
- * @param sig
- * @return void
+ * @param sig Signal number
  */
 void sigchld_handler(int sig);
 
 /**
  * @brief SIGINT handler (Ctrl-C)
- *
- * @param sig
- * @return void
+ * @param sig Signal number
  */
 void sigint_handler(int sig);
 
 /**
  * @brief SIGTSTP handler (Ctrl-Z)
- *
- * @param sig
- * @return void
+ * @param sig Signal number
  */
 void sigtstp_handler(int sig);

@@ -26,6 +26,10 @@
 // Main Function
 // ============================================================================
 
+/**
+ * @brief Main entry point for the YASH shell
+ * @return Exit status (0 for success, non-zero for error)
+ */
 int main() {
 
    setup_signal_handlers();
@@ -68,7 +72,9 @@ int main() {
       size_t len = strlen(buffer);
       if (len == MAX_CMDLINE - 1 && buffer[len - 1] != '\n') {
          int c;
-         while ((c = getchar()) != EOF && c != '\n');
+         while ((c = getchar()) != EOF && c != '\n') {
+            // Intentionally empty - consume remaining characters
+         }
          DEBUG_PRINT("Command too long\n");
          continue;
       }

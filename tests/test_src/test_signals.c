@@ -148,6 +148,7 @@ void test_signal_blocking(void) {
 
 // Custom signal handler for testing
 void custom_handler(int sig) {
+   (void)sig; // Suppress unused parameter warning
    // Do nothing
 }
 

@@ -25,9 +25,13 @@ pid_t foreground_pgid = 0;
 // Public Functions
 // ============================================================================
 
-void sigchld_handler(int sig) { child_status_changed = 1; }
+void sigchld_handler(int sig) {
+   (void)sig; // Suppress unused parameter warning
+   child_status_changed = 1;
+}
 
 void sigint_handler(int sig) {
+   (void)sig; // Suppress unused parameter warning
    DEBUG_PRINT("SIGINT handler called, foreground_pgid = %d", foreground_pgid);
    if (foreground_pgid > 0) {
       DEBUG_PRINT("Sending SIGINT to process group %d", -foreground_pgid);
@@ -38,6 +42,7 @@ void sigint_handler(int sig) {
 }
 
 void sigtstp_handler(int sig) {
+   (void)sig; // Suppress unused parameter warning
    DEBUG_PRINT("SIGTSTP handler called, foreground_pgid = %d", foreground_pgid);
    if (foreground_pgid > 0) {
       DEBUG_PRINT("Sending SIGTSTP to process group %d", -foreground_pgid);
