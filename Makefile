@@ -2,7 +2,7 @@
 
 # Compiler and flags
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99 -I./include -g -O0
+CFLAGS = -Wall -Wextra -std=c99 -D_POSIX_C_SOURCE=200809L -I./include -g -O0
 TEST_CFLAGS = $(CFLAGS) -I$(UNITYDIR)/src -I$(UNITYDIR)/extras/fixture/src
 LDFLAGS = 
 
