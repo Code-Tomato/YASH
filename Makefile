@@ -10,7 +10,7 @@ LDFLAGS =
 SRCDIR = src
 INCDIR = include
 OBJDIR = build/obj
-BINDIR = build/bin
+BINDIR = .
 DOCDIR = docs
 TESTDIR = tests
 UNITYDIR = $(TESTDIR)/unity
@@ -71,6 +71,7 @@ $(TESTBINDIR):
 # Clean up compiled files
 clean:
 	rm -rf build
+	rm -f $(BINDIR)/$(TARGET)
 
 # Clean and rebuild
 rebuild: clean all
@@ -99,6 +100,7 @@ install: $(BINDIR)/$(TARGET)
 # Uninstall (optional)
 uninstall:
 	rm -f /usr/local/bin/$(TARGET)
+	rm -f $(BINDIR)/$(TARGET)
 
 # Documentation targets
 docs: $(DOCDIR)/html/index.html
