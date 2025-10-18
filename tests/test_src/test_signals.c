@@ -17,8 +17,19 @@
 void test_signal_constants_defined(void) {
    // Test that signal constants are properly defined
    TEST_ASSERT_EQUAL(SIGINT, 2);
-   TEST_ASSERT_EQUAL(SIGTSTP, 18); // Fixed for macOS
-   TEST_ASSERT_EQUAL(SIGCHLD, 20); // Fixed for macOS
+   
+   // Signal values are platform-specific
+#ifdef __APPLE__
+   TEST_ASSERT_EQUAL(SIGTSTP, 18); // macOS
+   TEST_ASSERT_EQUAL(SIGCHLD, 20); // macOS
+#elif defined(__linux__)
+   TEST_ASSERT_EQUAL(SIGTSTP, 20); // Linux
+   TEST_ASSERT_EQUAL(SIGCHLD, 17); // Linux
+#else
+   // For other platforms, just verify they're defined
+   TEST_ASSERT_NOT_EQUAL(SIGTSTP, 0);
+   TEST_ASSERT_NOT_EQUAL(SIGCHLD, 0);
+#endif
 }
 
 void test_signal_handler_registration(void) {
@@ -81,8 +92,14 @@ void test_sigtstp_behavior(void) {
    // Test SIGTSTP (Ctrl+Z) behavior
    // Should send SIGTSTP to current foreground process but not stop the shell
 
-   // Test that SIGTSTP is properly defined
-   TEST_ASSERT_EQUAL(SIGTSTP, 18); // Fixed for macOS
+   // Test that SIGTSTP is properly defined (platform-specific value)
+#ifdef __APPLE__
+   TEST_ASSERT_EQUAL(SIGTSTP, 18); // macOS
+#elif defined(__linux__)
+   TEST_ASSERT_EQUAL(SIGTSTP, 20); // Linux
+#else
+   TEST_ASSERT_NOT_EQUAL(SIGTSTP, 0);
+#endif
 
    // Test that we can handle SIGTSTP
    signal(SIGTSTP, SIG_DFL);
@@ -93,8 +110,14 @@ void test_sigchld_behavior(void) {
    // Test SIGCHLD behavior
    // Should be handled to clean up zombie processes
 
-   // Test that SIGCHLD is properly defined
-   TEST_ASSERT_EQUAL(SIGCHLD, 20); // Fixed for macOS
+   // Test that SIGCHLD is properly defined (platform-specific value)
+#ifdef __APPLE__
+   TEST_ASSERT_EQUAL(SIGCHLD, 20); // macOS
+#elif defined(__linux__)
+   TEST_ASSERT_EQUAL(SIGCHLD, 17); // Linux
+#else
+   TEST_ASSERT_NOT_EQUAL(SIGCHLD, 0);
+#endif
 
    // Test that we can handle SIGCHLD
    signal(SIGCHLD, SIG_DFL);
